@@ -10,15 +10,15 @@
 #define NUM_LEDS 30
 #define LED_PIN 22
 
-BluetoothSerial SerialBT;
+BluetoothSerial Serial_bt;
 CRGB leds[NUM_LEDS];
 
-void bluetooth_recieve(void *) {
+void bluetooth_receive(void *) {
   while (true) {
-    if (SerialBT.available()) {
-      Serial.write(SerialBT.read());
+    if (Serial_bt.available()) {
+      Serial.print(Serial_bt.readString());
     }
-    vTaskDelay(30);
+    vTaskDelay(300);
   }
 }
 
@@ -45,22 +45,23 @@ void leds_blink(void *) {
 }
 void setup() {
   Serial.begin(115200);
-  SerialBT.begin("LEDS_INO"); // Bluetooth device name
+  Serial_bt.begin("LEDS_INO"); // Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
 
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  esp_wifi_stop();
+
+  esp_wifi_stop(); //stop WiFi because it is not used in this project
 
   xTaskCreatePinnedToCore(leds_blink,   // Function to implement the task
                           "leds_blink", // Name of the task
                           6000,         // Stack size in words
                           NULL,         // Task input parameter
-                          2,            // Priority of the task
+                          0,            // Priority of the task
                           NULL,         // Task handle.
                           1);           // Core where the task should run
 
-  xTaskCreatePinnedToCore(bluetooth_recieve,   // Function to implement the task
-                          "bluetooth_recieve", // Name of the task
+  xTaskCreatePinnedToCore(bluetooth_receive,   // Function to implement the task
+                          "bluetooth_receive", // Name of the task
                           6000,                // Stack size in words
                           NULL,                // Task input parameter
                           0,                   // Priority of the task
